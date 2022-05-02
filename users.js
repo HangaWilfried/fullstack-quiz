@@ -1,31 +1,20 @@
-const sqlite3 = require("sqlite3");
-const users = [
-  {
-    name: "kenneth fabo",
-    age: 28,
-  },
-  {
-    name: "rodrigue lagoue",
-    age: 39,
-  },
-  {
-    name: "hanga wilfried",
-    age: 21,
-  }
-]
+const sqlite3 = require('sqlite3');
+const express = require('express');
+const dataBase = new sqlite3.Database('accounts.db');
+dataBase.run('CREATE TABLE IF NOT EXISTS users(username text primary key, fullName varchar(50), level text)')
 
-const database = new sqlite3.Database('users.db', err => {
-  if(err) throw err;
-  console.log("database created")
-})
+const router = express.Router();
 
-database.serialize(() => {
-  database.run('create table client(name varchar(20), age integer)');
-
-  users.forEach(user => database.run('insert into client(name, age) values(?, ?)', [user.name, user.age]));
-
-  database.all('select * from client', (err, data) => {
-    if(err) throw err;
-    console.log(data);
+router.get("/", (req, res) => {
+  dataBase.all('SELECT * FROM users', (err, rows) => {
+    if (err) throw err;
+    res.send(rows);
   });
 })
+
+router.post("/", (req, res) => {
+  const query = dataBase.run('INSERT INTO users(username, fullName, level) VALUES(?, ?, ?)', req.query.fullName, req.query.level, req.query.username);
+  res.status(200).send(query);
+})
+
+module.exports = router;
